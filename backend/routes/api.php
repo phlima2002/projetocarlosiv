@@ -4,27 +4,33 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\DenunciaRapidaController;
 use App\Http\Controllers\Api\BoletimOcorrenciaController;
+use App\Http\Controllers\Api\AuthController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
+// --- ROTAS PÚBLICAS ---
+// (Registo e Login não precisam de autenticação)
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+
+// --- ROTAS PROTEGIDAS (PRECISA ESTAR LOGADO) ---
+// (Todas as outras rotas exigem 'auth:sanctum')
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // Rotas de Utilizador (Qualquer utilizador logado)
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/denuncias-rapidas', [DenunciaRapidaController::class, 'store']);
+    Route::post('/boletins-ocorrencia', [BoletimOcorrenciaController::class, 'store']);
+
+    
+    // --- ROTAS DE ADMIN (SÓ ADMIN PODE ACEDER) ---
+    // (Exigem 'auth:sanctum' E o nosso novo 'admin')
+    Route::middleware('admin')->group(function () {
+        
+        Route::get('/denuncias-rapidas', [DenunciaRapidaController::class, 'index']);
+        Route::delete('/denuncias-rapidas/{id}', [DenunciaRapidaController::class, 'destroy']);
+        
+        Route::get('/boletins-ocorrencia', [BoletimOcorrenciaController::class, 'index']);
+        Route::delete('/boletins-ocorrencia/{id}', [BoletimOcorrenciaController::class, 'destroy']);
+    });
 });
-
-// Nossas novas rotas para receber as denúncias
-// O método "store" é, por convenção, usado para "salvar" um novo recurso.
-
-Route::apiResource('denuncias-rapidas', DenunciaRapidaController::class)
-     ->only(['index', 'store', 'destroy']);
-
-Route::apiResource('boletins-ocorrencia', BoletimOcorrenciaController::class)
-     ->only(['index', 'store', 'destroy']);

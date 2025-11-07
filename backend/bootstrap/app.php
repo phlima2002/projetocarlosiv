@@ -11,9 +11,19 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php', 
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-        //
+    ->withMiddleware(function (Middleware $middleware) {
+        
+        // Ativa a autenticação de API (já fizemos)
+        $middleware->statefulApi(); 
+
+        // --- ADICIONE ISTO ---
+        // Dá o apelido 'admin' ao nosso novo middleware
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+        ]);
+        // --- FIM DA ADIÇÃO ---
+
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
+    ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
